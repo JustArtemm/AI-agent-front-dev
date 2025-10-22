@@ -19,7 +19,7 @@ const DEMO = {
 async function sendToN8N(page) {
   try {
     const payload = {
-      querry: {
+      query: {
         page: page
       }
     };
