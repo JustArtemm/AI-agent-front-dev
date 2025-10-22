@@ -3,8 +3,8 @@ const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook-test/main-entry
 
 // Action URLs
 const ACTION_URLS = {
-  combine: 'https://example.com/combine',
-  init_meeting: 'https://example.com/init_meeting'
+  combine: 'https://liana0904.app.n8n.cloud/webhook-test/combine-tasks',
+  init_meeting: 'https://liana0904.app.n8n.cloud/webhook-test/init-meeting'
 };
 
 // Demo data
