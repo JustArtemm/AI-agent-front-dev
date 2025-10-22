@@ -50,17 +50,44 @@ async function sendToN8N(page) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const responseData = await response.json();
-    console.log('Successfully received data from n8n:', responseData);
+    // First get the response as text to see what we're receiving
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+    
+    let responseData;
+    try {
+      // Try to parse as JSON array
+      responseData = JSON.parse(responseText);
+      console.log('Parsed JSON response:', responseData);
+    } catch (parseError) {
+      console.error('Error parsing JSON:', parseError);
+      throw new Error('Invalid JSON response from server');
+    }
     
     // Process the response data for analysis section
-    if (page === 'analysis' && Array.isArray(responseData)) {
-      similarTasks = responseData;
-      displaySimilarTasks(responseData);
+    if (page === 'analysis') {
+      // Handle both array and single object responses
+      if (Array.isArray(responseData)) {
+        similarTasks = responseData;
+        displaySimilarTasks(responseData);
+      } else if (typeof responseData === 'object' && responseData !== null) {
+        // If it's a single object, wrap it in an array
+        similarTasks = [responseData];
+        displaySimilarTasks([responseData]);
+      } else {
+        console.warn('Unexpected response format for analysis:', responseData);
+        similarTasks = [];
+        displaySimilarTasks([]);
+      }
     }
     
   } catch (error) {
     console.error('Error sending data to n8n:', error);
+    // Show error in the UI
+    const container = document.getElementById('similar-tasks-container');
+    if (container) {
+      container.innerHTML = `<div class="alert alert-bad">Ошибка загрузки данных: ${error.message}</div>`;
+    }
   }
 }
 
