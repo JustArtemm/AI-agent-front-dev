@@ -20,8 +20,7 @@ async function sendToN8N(page) {
   try {
     const payload = {
       querry: {
-        page: page,
-        html: document.documentElement.outerHTML
+        page: page
       }
     };
 
