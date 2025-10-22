@@ -25,7 +25,7 @@ async function sendToN8N(page) {
     };
 
     console.log('Sending POST request to n8n for page:', page);
-    console.log('HTML length:', payload.querry.html.length);
+    // console.log('HTML length:', payload.querry.html.length);
 
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
