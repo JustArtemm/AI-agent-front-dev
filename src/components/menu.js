@@ -4,8 +4,10 @@ const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook-test/main-entry
 // Action URLs
 const ACTION_URLS = {
   combine: 'https://liana0904.app.n8n.cloud/webhook-test/combine-tasks',
-  init_meeting: 'https://liana0904.app.n8n.cloud/webhook-test/init-meeting'
+  init_meeting: 'https://liana0904.app.n8n.cloud/webhook-test/init-meeting',
+  send_to_chat: 'https://liana0904.app.n8n.cloud/webhook-test/send-to-chat',
 };
+
 
 // Demo data
 const DEMO = {
@@ -674,21 +676,36 @@ function initializeChat() {
 
   sendButton.addEventListener('click', () => {
     const message = chatInput.value.trim();
-    if (message) {
-      addMessage(message, true);
-      chatInput.value = '';
+    if (!message) return;
 
-      // Simulate AI response
-      setTimeout(() => {
-        const responses = [
-          "На основе анализа данных, я вижу, что проект движется по плану, но есть несколько областей, требующих внимания.",
-          "Рекомендую обратить внимание на распределение ресурсов - некоторые задачи могут быть перегружены.",
-          "Согласно моему анализу, риск срыва дедлайнов составляет около 15%. Рекомендую провести встречу для корректировки плана.",
-          "За последнюю неделю команда показала отличные результаты - выполнено на 12% больше задач, чем планировалось."
-        ];
-        addMessage(responses[Math.floor(Math.random() * responses.length)], false);
-      }, 1000);
-    }
+    addMessage(message, true);
+    chatInput.value = '';
+
+    // Send message to n8n webhook
+    fetch(ACTION_URLS.send_to_chat, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    })
+      .then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        console.log('Raw chat response:', text);
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error('Invalid JSON in chat response:', text);
+          throw new Error('Некорректный JSON-ответ от сервера');
+        }
+
+        const reply = data.chat_response || 'Нет ответа от ИИ.';
+        addMessage(reply, false);
+      })
+      .catch(err => {
+        console.error('Chat send error:', err);
+        addMessage(`Ошибка при отправке сообщения: ${err.message}`, false);
+      });
   });
 
   chatInput.addEventListener('keypress', (e) => {
@@ -720,6 +737,7 @@ function initializeChat() {
     alert('Функция экспорта чата в PDF будет реализована при интеграции с бэкендом');
   });
 }
+
 
 // Chart functionality
 function initializeCharts() {
