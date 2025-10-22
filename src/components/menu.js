@@ -1,6 +1,13 @@
 // Webhook URL - replace with your actual n8n webhook URL
 const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook-test/main-entry';
 
+// Action URLs
+const ACTION_URLS = {
+  combine: 'https://example.com/combine',
+  ignore: 'https://example.com/ignore',
+  init_meeting: 'https://example.com/init_meeting'
+};
+
 // Demo data
 const DEMO = {
   byStatus: { "New": 5, "In progress": 4, "In testing": 1, "Done": 2 },
@@ -15,6 +22,9 @@ const DEMO = {
   ]
 };
 
+// Store for similar/duplicate tasks from n8n
+let similarTasks = [];
+
 // Function to send POST request to n8n webhook
 async function sendToN8N(page) {
   try {
@@ -25,7 +35,6 @@ async function sendToN8N(page) {
     };
 
     console.log('Sending POST request to n8n for page:', page);
-    // console.log('HTML length:', payload.querry.html.length);
 
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
@@ -41,12 +50,140 @@ async function sendToN8N(page) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const responseData = await response.text();
-    console.log('Successfully sent data to n8n. Response:', responseData);
+    const responseData = await response.json();
+    console.log('Successfully received data from n8n:', responseData);
+    
+    // Process the response data for analysis section
+    if (page === 'analysis' && Array.isArray(responseData)) {
+      similarTasks = responseData;
+      displaySimilarTasks(responseData);
+    }
     
   } catch (error) {
     console.error('Error sending data to n8n:', error);
   }
+}
+
+// Function to display similar/duplicate tasks from n8n response
+function displaySimilarTasks(tasks) {
+  const container = document.getElementById('similar-tasks-container');
+  if (!container) return;
+
+  if (!tasks || tasks.length === 0) {
+    container.innerHTML = '<div class="muted">Нет похожих или дублирующихся задач</div>';
+    return;
+  }
+
+  const duplicates = tasks.filter(task => task.type === 'duplicate');
+  const similar = tasks.filter(task => task.type === 'similar');
+
+  let html = '';
+
+  // Display duplicates first
+  if (duplicates.length > 0) {
+    html += '<h4>Дубликаты задач</h4>';
+    duplicates.forEach((task, index) => {
+      html += createTaskAlert(task, 'bad', index);
+    });
+  }
+
+  // Display similar tasks
+  if (similar.length > 0) {
+    if (duplicates.length > 0) {
+      html += '<h4 style="margin-top: 20px;">Похожие задачи</h4>';
+    } else {
+      html += '<h4>Похожие задачи</h4>';
+    }
+    similar.forEach((task, index) => {
+      html += createTaskAlert(task, 'warn', index + duplicates.length);
+    });
+  }
+
+  container.innerHTML = html;
+
+  // Add event listeners to action buttons
+  initializeActionButtons();
+}
+
+// Function to create alert HTML for a task pair
+function createTaskAlert(taskData, alertType, index) {
+  const task1 = taskData.task1;
+  const task2 = taskData.task2;
+  const typeText = taskData.type === 'duplicate' ? 'Дублирование функционала' : 'Обнаружены похожие задачи';
+
+  return `
+    <div class="alert alert-${alertType}" data-task-index="${index}">
+      <div class="alert-icon">!</div>
+      <div class="alert-content">
+        <strong>${typeText}:</strong> "${task1.title}" (исполнитель: ${task1.user}) и "${task2.title}" (исполнитель: ${task2.user})
+        <div class="alert-actions">
+          <button class="alert-btn" data-action="combine">Объединить</button>
+          <button class="alert-btn" data-action="ignore">Игнорировать</button>
+          <button class="alert-btn" data-action="init_meeting">Назначить встречу</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Function to send action request
+async function sendActionRequest(action, taskData) {
+  try {
+    console.log(`Sending ${action} action for tasks:`, taskData);
+
+    const response = await fetch(ACTION_URLS[action], {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(taskData)
+    });
+
+    console.log(`Action ${action} response status:`, response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const responseData = await response.text();
+    console.log(`Successfully sent ${action} action. Response:`, responseData);
+    
+    // Remove the task alert from UI after successful action
+    const alertElement = document.querySelector(`[data-task-index="${taskData.index}"]`);
+    if (alertElement) {
+      alertElement.remove();
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error sending ${action} action:`, error);
+    alert(`Ошибка при выполнении действия: ${error.message}`);
+    return false;
+  }
+}
+
+// Function to initialize action buttons
+function initializeActionButtons() {
+  const actionButtons = document.querySelectorAll('.alert-btn');
+  
+  actionButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      const action = e.target.getAttribute('data-action');
+      const alertElement = e.target.closest('.alert');
+      const taskIndex = parseInt(alertElement.getAttribute('data-task-index'));
+      
+      if (similarTasks[taskIndex]) {
+        const taskData = {
+          ...similarTasks[taskIndex],
+          index: taskIndex,
+          action: action,
+          timestamp: new Date().toISOString()
+        };
+        
+        sendActionRequest(action, taskData);
+      }
+    });
+  });
 }
 
 // Function to initialize the application
@@ -100,28 +237,9 @@ export function initializeApp() {
             <p class="sub">Поиск похожих задач и выявление дубликатов</p>
             
             <div class="card">
-              <h3>Возможные дубликаты</h3>
-              <div class="alert alert-warn">
-                <div class="alert-icon">!</div>
-                <div class="alert-content">
-                  <strong>Обнаружены похожие задачи:</strong> "Создать API для пользователей" и "Разработать эндпоинты для регистрации"
-                  <div class="alert-actions">
-                    <button class="alert-btn">Объединить</button>
-                    <button class="alert-btn">Игнорировать</button>
-                    <button class="alert-btn">Назначить встречу</button>
-                  </div>
-                </div>
-              </div>
-              <div class="alert alert-bad">
-                <div class="alert-icon">!</div>
-                <div class="alert-content">
-                  <strong>Дублирование функционала:</strong> "Интеграция с платежной системой А" и "Подключение платежного шлюза B"
-                  <div class="alert-actions">
-                    <button class="alert-btn">Объединить</button>
-                    <button class="alert-btn">Игнорировать</button>
-                    <button class="alert-btn">Назначить встречу</button>
-                  </div>
-                </div>
+              <h3>Возможные дубликаты и похожие задачи</h3>
+              <div id="similar-tasks-container">
+                <div class="muted">Загрузка данных...</div>
               </div>
             </div>
             
@@ -289,7 +407,7 @@ export function initializeApp() {
               <div class="chart-options">
                 <div class="chart-option active" data-chart="line">Линейный график</div>
                 <div class="chart-option" data-chart="bar">Столбчатая диаграмма</div>
-                <div class="chart-option" data-chart="area">Областная диаграмма</div>
+                <div class="chart-option" data-chart="area">Областная диаграмma</div>
                 <div class="chart-option" data-chart="radar">Радарная диаграмма</div>
               </div>
             </div>
@@ -395,7 +513,6 @@ export function initializeApp() {
   initializeReports();
   initializeChat();
   initializeCharts();
-  initializeAlerts();
 }
 
 // Navigation functionality
@@ -576,17 +693,6 @@ function initializeCharts() {
       options.forEach(opt => opt.classList.remove('active'));
       option.classList.add('active');
       // Chart rendering logic would go here
-    });
-  });
-}
-
-// Alert functionality
-function initializeAlerts() {
-  const alertButtons = document.querySelectorAll('.alert-btn');
-  alertButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const action = button.textContent;
-      alert(`Выполняется действие: ${action}. В реальном приложении здесь будет соответствующая функциональность.`);
     });
   });
 }
