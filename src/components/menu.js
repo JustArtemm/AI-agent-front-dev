@@ -1,11 +1,11 @@
 // Webhook URL - replace with your actual n8n webhook URL
-const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook-test/main-entry';
+const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook/main-entry';
 
 // Action URLs
 const ACTION_URLS = {
-  combine: 'https://liana0904.app.n8n.cloud/webhook-test/combine-tasks',
-  init_meeting: 'https://liana0904.app.n8n.cloud/webhook-test/init-meeting',
-  send_to_chat: 'https://liana0904.app.n8n.cloud/webhook-test/send-to-chat',
+  combine: 'https://liana0904.app.n8n.cloud/webhook/combine-tasks',
+  init_meeting: 'https://liana0904.app.n8n.cloud/webhook/init-meeting',
+  send_to_chat: 'https://liana0904.app.n8n.cloud/webhook/send-to-chat',
 };
 
 
