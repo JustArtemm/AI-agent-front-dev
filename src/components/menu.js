@@ -128,6 +128,12 @@ function displaySimilarTasks(tasks) {
 
   container.innerHTML = html;
 
+  container.innerHTML = `
+  <div id="similar-tasks-scroll" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+     ${html}
+   </div>
+ `;
+
   // Add event listeners to action buttons
   initializeActionButtons();
 }
@@ -207,6 +213,10 @@ function initializeActionButtons() {
           timestamp: new Date().toISOString()
         };
         
+        if (action === 'ignore') {
+         alertElement.remove();
+       }
+
         sendActionRequest(action, taskData);
       }
     });
