@@ -702,7 +702,7 @@ function initializeReports() {
 document.getElementById('btn-pdf').addEventListener('click', async () => {
   try {
     // Send POST request to n8n webhook
-    const response = await fetch(ACTION_URLS.combine, {  // <-- you can replace with your own webhook if needed
+    const response = await fetch(ACTION_URLS.export_csv, {  // <-- you can replace with your own webhook if needed
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ request: 'export_csv', timestamp: new Date().toISOString() })
