@@ -6,6 +6,7 @@ const ACTION_URLS = {
   combine: 'https://liana0904.app.n8n.cloud/webhook/combine-tasks',
   init_meeting: 'https://liana0904.app.n8n.cloud/webhook/init-meeting',
   send_to_chat: 'https://liana0904.app.n8n.cloud/webhook/send-to-chat',
+  user_visit : "https://liana0904.app.n8n.cloud/webhook/user-event"
 };
 
 
@@ -25,7 +26,20 @@ const DEMO = {
 
 // Store for similar/duplicate tasks from n8n
 let similarTasks = [];
-
+window.addEventListener('load', () => {
+  fetch(ACTION_URLS.user_visit, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'page_visit',
+      url: window.location.href,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    })
+  })
+    .then(res => console.log('Visit logged:', res.status))
+    .catch(err => console.error('Error logging visit:', err));
+});
 // Function to send POST request to n8n webhook
 async function sendToN8N(page) {
   try {
