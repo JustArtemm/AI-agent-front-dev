@@ -373,16 +373,6 @@ export function initializeApp() {
             
             <div class="card">
               <h3>Предупреждения о рисках</h3>
-              <div class="alert alert-bad">
-                <div class="alert-icon">!</div>
-                <div class="alert-content">
-                  <strong>Перегрузка ресурсов:</strong> Разработчик Иванов А.С. назначен на 5 задач одновременно
-                  <div class="alert-actions">
-                    <button class="alert-btn">Перераспределить</button>
-                    <button class="alert-btn">Назначить встречу</button>
-                  </div>
-                </div>
-              </div>
             </div>
             
             <div class="row">
