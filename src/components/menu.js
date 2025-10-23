@@ -5,7 +5,7 @@ const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook/main-entry';
 const ACTION_URLS = {
   combine: 'https://liana0904.app.n8n.cloud/webhook/combine-tasks',
   init_meeting: 'https://liana0904.app.n8n.cloud/webhook/init-meeting',
-  send_to_chat: 'https://liana0904.app.n8n.cloud/webhook/send-to-chat',
+  send_to_chat: 'https://liana0904.app.n8n.cloud/webhook-test/send-to-chat',
   user_visit : "https://liana0904.app.n8n.cloud/webhook-test/user-event"
 };
 
