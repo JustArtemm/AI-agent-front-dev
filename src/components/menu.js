@@ -1,17 +1,16 @@
-// Webhook URL - replace with your actual n8n webhook URL
-const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook/main-entry';
+// Webhook URL - replace with your actual n8n webhook URL 
+const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook/main-entry';  
 
-// Action URLs
+// Action URLs 
 const ACTION_URLS = {
   combine: 'https://liana0904.app.n8n.cloud/webhook/combine-tasks',
   init_meeting: 'https://liana0904.app.n8n.cloud/webhook/init-meeting',
   send_to_chat: 'https://liana0904.app.n8n.cloud/webhook/send-to-chat',
-  user_visit : "https://liana0904.app.n8n.cloud/webhook/user-event",
-  export_csv : "https://liana0904.app.n8n.cloud/webhook/export-csv"
-};
+  user_visit: "https://liana0904.app.n8n.cloud/webhook/user-event",
+  export_csv: "https://liana0904.app.n8n.cloud/webhook/export-csv"
+};  
 
-
-// Demo data
+// Demo data 
 const DEMO = {
   byStatus: { "New": 5, "In progress": 4, "In testing": 1, "Done": 2 },
   tasks: [
@@ -25,8 +24,10 @@ const DEMO = {
   ]
 };
 
-// Store for similar/duplicate tasks from n8n
+// Store for similar/duplicate tasks from n8n 
 let similarTasks = [];
+let isChatWaiting = false;
+
 window.addEventListener('load', () => {
   fetch(ACTION_URLS.user_visit, {
     method: 'POST',
@@ -36,14 +37,14 @@ window.addEventListener('load', () => {
       url: window.location.href,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      // random number as sessionId
       sessionId: Math.random().toString(36).substring(2, 15)
     })
   })
     .then(res => console.log('Visit logged:', res.status))
     .catch(err => console.error('Error logging visit:', err));
 });
-// Function to send POST request to n8n webhook
+
+// Function to send POST request to n8n webhook 
 async function sendToN8N(page) {
   try {
     const payload = {
@@ -54,6 +55,31 @@ async function sendToN8N(page) {
 
     console.log('Sending POST request to n8n for page:', page);
 
+    // Show loading state
+    if (page === 'analysis') {
+      const container = document.getElementById('similar-tasks-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <div>Выполняется анализ при помощи ИИ</div>
+          </div>
+        `;
+      }
+    }
+
+    if (page === 'planning') {
+      const container = document.getElementById('planning-alerts-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <div>Выполняется анализ при помощи ИИ</div>
+          </div>
+        `;
+      }
+    }
+
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
@@ -63,33 +89,29 @@ async function sendToN8N(page) {
     });
 
     console.log('Response status:', response.status);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // First get the response as text to see what we're receiving
     const responseText = await response.text();
     console.log('Raw response:', responseText);
-    
+
     let responseData;
     try {
-      // Try to parse as JSON array
       responseData = JSON.parse(responseText);
       console.log('Parsed JSON response:', responseData);
     } catch (parseError) {
       console.error('Error parsing JSON:', parseError);
       throw new Error('Invalid JSON response from server');
     }
-    
+
     // Process the response data for analysis section
     if (page === 'analysis') {
-      // Handle both array and single object responses
       if (Array.isArray(responseData)) {
         similarTasks = responseData;
         displaySimilarTasks(responseData);
       } else if (typeof responseData === 'object' && responseData !== null) {
-        // If it's a single object, wrap it in an array
         similarTasks = [responseData];
         displaySimilarTasks([responseData]);
       } else {
@@ -109,10 +131,9 @@ async function sendToN8N(page) {
         displayPlanningAlerts([]);
       }
     }
-    
+
   } catch (error) {
     console.error('Error sending data to n8n:', error);
-    // Show error in the UI
     const container = document.getElementById('similar-tasks-container');
     if (container) {
       container.innerHTML = `<div class="alert alert-bad">Ошибка загрузки данных: ${error.message}</div>`;
@@ -120,7 +141,7 @@ async function sendToN8N(page) {
   }
 }
 
-// Function to display similar/duplicate tasks from n8n response
+// Function to display similar/duplicate tasks from n8n response 
 function displaySimilarTasks(tasks) {
   const container = document.getElementById('similar-tasks-container');
   if (!container) return;
@@ -135,7 +156,6 @@ function displaySimilarTasks(tasks) {
 
   let html = '';
 
-  // Display duplicates first
   if (duplicates.length > 0) {
     html += '<h4>Дубликаты задач</h4>';
     duplicates.forEach((task, index) => {
@@ -143,7 +163,6 @@ function displaySimilarTasks(tasks) {
     });
   }
 
-  // Display similar tasks
   if (similar.length > 0) {
     if (duplicates.length > 0) {
       html += '<h4 style="margin-top: 20px;">Похожие задачи</h4>';
@@ -155,20 +174,16 @@ function displaySimilarTasks(tasks) {
     });
   }
 
-  container.innerHTML = html;
-
   container.innerHTML = `
-  <div id="similar-tasks-scroll" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
-     ${html}
-   </div>
- `;
+    <div id="similar-tasks-scroll" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+      ${html}
+    </div>
+  `;
 
-  // Add event listeners to action buttons
   initializeActionButtons();
 }
 
-// Function to display alerts in Planning section from n8n webhook response
-// Function to display alerts in Planning section from n8n webhook response
+// Function to display alerts in Planning section from n8n webhook response 
 function displayPlanningAlerts(alerts) {
   const container = document.getElementById('planning-alerts-container');
   if (!container) return;
@@ -179,7 +194,7 @@ function displayPlanningAlerts(alerts) {
   }
 
   const html = alerts.map((item, index) => {
-    const type = item.type === 'bad' ? 'bad' : 'warn'; // red = bad, yellow = warn
+    const type = item.type === 'bad' ? 'bad' : 'warn';
     return `
       <div class="alert alert-${type}" data-planning-index="${index}">
         <div class="alert-icon">!</div>
@@ -198,7 +213,7 @@ function displayPlanningAlerts(alerts) {
   `;
 }
 
-// Function to create alert HTML for a task pair
+// Function to create alert HTML for a task pair 
 function createTaskAlert(taskData, alertType, index) {
   const task1 = taskData.task1;
   const task2 = taskData.task2;
@@ -219,7 +234,7 @@ function createTaskAlert(taskData, alertType, index) {
   `;
 }
 
-// Function to send action request
+// Function to send action request 
 async function sendActionRequest(action, taskData) {
   try {
     console.log(`Sending ${action} action for tasks:`, taskData);
@@ -233,20 +248,19 @@ async function sendActionRequest(action, taskData) {
     });
 
     console.log(`Action ${action} response status:`, response.status);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const responseData = await response.text();
     console.log(`Successfully sent ${action} action. Response:`, responseData);
-    
-    // Remove the task alert from UI after successful action
+
     const alertElement = document.querySelector(`[data-task-index="${taskData.index}"]`);
     if (alertElement) {
       alertElement.remove();
     }
-    
+
     return true;
   } catch (error) {
     console.error(`Error sending ${action} action:`, error);
@@ -255,16 +269,16 @@ async function sendActionRequest(action, taskData) {
   }
 }
 
-// Function to initialize action buttons
+// Function to initialize action buttons 
 function initializeActionButtons() {
   const actionButtons = document.querySelectorAll('.alert-btn');
-  
+
   actionButtons.forEach(button => {
     button.addEventListener('click', (e) => {
       const action = e.target.getAttribute('data-action');
       const alertElement = e.target.closest('.alert');
       const taskIndex = parseInt(alertElement.getAttribute('data-task-index'));
-      
+
       if (similarTasks[taskIndex]) {
         const taskData = {
           ...similarTasks[taskIndex],
@@ -272,23 +286,21 @@ function initializeActionButtons() {
           action: action,
           timestamp: new Date().toISOString()
         };
-        
+
         if (action === 'ignore') {
-         alertElement.remove();
-       }
-        else {
+          alertElement.remove();
+        } else {
           sendActionRequest(action, taskData);
         }
-        
       }
     });
   });
 }
 
-// Function to initialize the application
+// Function to initialize the application 
 export function initializeApp() {
   const app = document.getElementById('app');
-  
+
   app.innerHTML = `
     <div class="wrap">
       <div class="layout">
@@ -334,14 +346,17 @@ export function initializeApp() {
           <div class="section" id="analysis">
             <h1>Анализ задач</h1>
             <p class="sub">Поиск похожих задач и выявление дубликатов</p>
-            
+
             <div class="card">
               <h3>Возможные дубликаты и похожие задачи</h3>
               <div id="similar-tasks-container">
-                <div class="muted">Загрузка данных...</div>
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <div>Выполняется анализ при помощи ИИ</div>
+                </div>
               </div>
             </div>
-            
+
             <div class="card">
               <h3>Поиск похожих задач</h3>
               <div class="toolbar">
@@ -364,15 +379,17 @@ export function initializeApp() {
           <div class="section" id="planning">
             <h1>Планирование</h1>
             <p class="sub">Управление задачами и дедлайнами</p>
-            
+
             <div class="card">
               <h3>Предупреждения о рисках</h3>
-              <!-- Dynamic alerts from webhook -->
               <div id="planning-alerts-container">
-                <div class="muted">Загрузка данных...</div>
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <div>Выполняется анализ при помощи ИИ</div>
+                </div>
               </div>
             </div>
-            
+
             <div class="row">
               <div class="col">
                 <div class="card">
@@ -407,7 +424,7 @@ export function initializeApp() {
                 </div>
               </div>
             </div>
-            
+
             <div class="card">
               <h3>Календарь дедлайнов</h3>
               <div id="calendar-chart" class="chart-container"></div>
@@ -423,7 +440,7 @@ export function initializeApp() {
           <div class="section" id="project">
             <h1>Анализ проекта</h1>
             <p class="sub">Метрики и выводы ИИ</p>
-            
+
             <div class="card">
               <h3>Ключевые метрики</h3>
               <div class="row">
@@ -462,7 +479,7 @@ export function initializeApp() {
                 </div>
               </div>
             </div>
-            
+
             <div class="card">
               <h3>Анализ ИИ</h3>
               <div class="alert alert-ok">
@@ -482,7 +499,7 @@ export function initializeApp() {
                 </div>
               </div>
             </div>
-            
+
             <div class="card">
               <h3>Визуализация метрик</h3>
               <div id="metrics-chart" class="chart-container"></div>
@@ -556,31 +573,33 @@ export function initializeApp() {
           <div class="section" id="chat">
             <h1>Чат с ИИ-агентом</h1>
             <p class="sub">Задавайте вопросы о проекте, получайте аналитику и рекомендации</p>
-            
-            <div class="card">
-              <div class="chat-container">
+
+            <div class="card" style="height: calc(100vh - 200px);">
+              <div class="chat-container" style="height: 100%;">
                 <div class="chat-messages">
                   <div class="chat-message ai">
-                    Здравствуйте! Я ваш ИИ-помощник по управлению проектами. Могу помочь с анализом данных, выявлением рисков и рекомендациями по оптимизации процессов. Чем могу помочь?
-                  </div>
-                  <div class="chat-message user">
-                    Какие задачи находятся в группе риска по срыву дедлайнов?
-                  </div>
-                  <div class="chat-message ai">
-                    На основе анализа данных, следующие задачи имеют высокий риск срыва дедлайнов:<br><br>
-                    1. <strong>Модуль аналитики</strong> (ID: 203) - отставание 3 дня, сложность высокая<br>
-                    2. <strong>Интеграция с CRM</strong> (ID: 215) - недостаточно ресурсов<br>
-                    3. <strong>Тестирование безопасности</strong> (ID: 228) - блокируется другими задачами<br><br>
-                    Рекомендую перераспределить ресурсы и провести встречу с командой для корректировки плана.
+                    <div class="message-content">
+                      Здравствуйте! Я ваш ИИ-помощник по управлению проектами. Могу помочь с анализом данных, выявлением рисков и рекомендациями по оптимизации процессов. Чем могу помочь?
+                    </div>
                   </div>
                 </div>
-                <div class="chat-input">
-                  <input type="text" placeholder="Введите ваш вопрос..." id="chat-input" />
-                  <button id="send-message">Отправить</button>
-                </div>
-                <div class="chat-export">
-                  <button class="fakebtn" id="export-chat-csv">Экспорт чата в CSV</button>
-                  <button class="fakebtn" id="export-chat-pdf">Экспорт чата в PDF</button>
+                <div class="chat-input-container">
+                  <div class="chat-typing-indicator" id="typing-indicator" style="display: none;">
+                    <div class="typing-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <div>Печатает...</div>
+                  </div>
+                  <div class="chat-input">
+                    <input type="text" placeholder="Введите ваш вопрос..." id="chat-input" />
+                    <button id="send-message">Отправить</button>
+                  </div>
+                  <div class="chat-export">
+                    <button class="fakebtn" id="export-chat-csv">Экспорт чата в CSV</button>
+                    <button class="fakebtn" id="export-chat-pdf">Экспорт чата в PDF</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -601,19 +620,19 @@ export function initializeApp() {
 function initializeNavigation() {
   const menuItems = document.querySelectorAll('.menu .item');
   const sections = document.querySelectorAll('.section');
-  
+
   menuItems.forEach(item => {
     item.addEventListener('click', () => {
       const sectionId = item.getAttribute('data-section');
-      
+
       // Update active menu item
       menuItems.forEach(i => i.classList.remove('active'));
       item.classList.add('active');
-      
+
       // Show corresponding section
       sections.forEach(s => s.classList.remove('active'));
       document.getElementById(sectionId).classList.add('active');
-      
+
       // Send GET request to n8n webhook
       sendToN8N(sectionId);
     });
@@ -694,64 +713,58 @@ function initializeReports() {
     a.download = 'tasks.csv'; document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
   });
 
-  // document.getElementById('btn-pdf').addEventListener('click', () => {
-  //   alert('Функция экспорта в PDF будет реализована при интеграции с бэкендом');
-  // });
-
   document.getElementById('btn-pdf').textContent = 'Скачать CSV';
-document.getElementById('btn-pdf').addEventListener('click', async () => {
-  try {
-    // Send POST request to n8n webhook
-    const response = await fetch(ACTION_URLS.export_csv, {  // <-- you can replace with your own webhook if needed
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request: 'export_csv', timestamp: new Date().toISOString() })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Ошибка HTTP ${response.status}`);
-    }
-
-    const responseText = await response.text();
-    console.log('Raw CSV response text:', responseText);
-
-    let data;
+  document.getElementById('btn-pdf').addEventListener('click', async () => {
     try {
-      data = JSON.parse(responseText);
-    } catch (err) {
-      console.error('Ошибка при парсинге JSON:', err);
-      alert('Некорректный ответ сервера: не удалось распарсить JSON.');
-      return;
+      const response = await fetch(ACTION_URLS.export_csv, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request: 'export_csv', timestamp: new Date().toISOString() })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка HTTP ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Raw CSV response text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        console.error('Ошибка при парсинге JSON:', err);
+        alert('Некорректный ответ сервера: не удалось распарсить JSON.');
+        return;
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        alert('Нет данных для экспорта.');
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+      const csvRows = [
+        headers.join(','),
+        ...data.map(obj => headers.map(h => `"${String(obj[h] ?? '').replace(/"/g, '""')}"`).join(','))
+      ];
+      const csvContent = csvRows.join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `n8n_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      console.log('CSV file generated and download started.');
+    } catch (error) {
+      console.error('Ошибка при скачивании CSV:', error);
+      alert(`Не удалось скачать CSV: ${error.message}`);
     }
+  });
 
-    if (!Array.isArray(data) || data.length === 0) {
-      alert('Нет данных для экспорта.');
-      return;
-    }
-
-    // Convert JSON array to CSV
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(','), // header line
-      ...data.map(obj => headers.map(h => `"${String(obj[h] ?? '').replace(/"/g, '""')}"`).join(','))
-    ];
-    const csvContent = csvRows.join('\n');
-
-    // Download the CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `n8n_export_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    console.log('CSV file generated and download started.');
-  } catch (error) {
-    console.error('Ошибка при скачивании CSV:', error);
-    alert(`Не удалось скачать CSV: ${error.message}`);
-  }
-});
   document.getElementById('btn-refresh').addEventListener('click', () => location.reload());
 }
 
@@ -760,47 +773,74 @@ function initializeChat() {
   const chatInput = document.getElementById('chat-input');
   const sendButton = document.getElementById('send-message');
   const chatMessages = document.querySelector('.chat-messages');
+  const typingIndicator = document.getElementById('typing-indicator');
 
-  function addMessage(text, isUser) {
+  function addMessage(text, isUser, isHTML = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
-    messageDiv.textContent = text;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    if (isHTML && !isUser) {
+      contentDiv.innerHTML = text;
+    } else {
+      contentDiv.textContent = text;
+    }
+    
+    messageDiv.appendChild(contentDiv);
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  sendButton.addEventListener('click', () => {
+  function showTypingIndicator() {
+    typingIndicator.style.display = 'flex';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function hideTypingIndicator() {
+    typingIndicator.style.display = 'none';
+  }
+
+  sendButton.addEventListener('click', async () => {
     const message = chatInput.value.trim();
     if (!message) return;
 
     addMessage(message, true);
     chatInput.value = '';
+    isChatWaiting = true;
+    showTypingIndicator();
 
-    // Send message to n8n webhook
-    fetch(ACTION_URLS.send_to_chat, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
-    })
-      .then(async res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        console.log('Raw chat response:', text);
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          console.error('Invalid JSON in chat response:', text);
-          throw new Error('Некорректный JSON-ответ от сервера');
-        }
-
-        const reply = data.chat_response || 'Нет ответа от ИИ.';
-        addMessage(reply, false);
-      })
-      .catch(err => {
-        console.error('Chat send error:', err);
-        addMessage(`Ошибка при отправке сообщения: ${err.message}`, false);
+    try {
+      const response = await fetch(ACTION_URLS.send_to_chat, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
       });
+
+      if (!response.ok) throw new Error(`HTTP ${res.status}`);
+      
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error('Invalid JSON in chat response:', text);
+        throw new Error('Некорректный JSON-ответ от сервера');
+      }
+
+      hideTypingIndicator();
+      isChatWaiting = false;
+      
+      const reply = data.chat_response || 'Нет ответа от ИИ.';
+      // Use HTML formatting for AI responses
+      addMessage(reply, false, true);
+    } catch (err) {
+      hideTypingIndicator();
+      isChatWaiting = false;
+      console.error('Chat send error:', err);
+      addMessage(`Ошибка при отправке сообщения: ${err.message}`, false);
+    }
   });
 
   chatInput.addEventListener('keypress', (e) => {
@@ -833,7 +873,6 @@ function initializeChat() {
   });
 }
 
-
 // Chart functionality
 function initializeCharts() {
   const chartOptions = document.querySelectorAll('.chart-option');
@@ -843,7 +882,6 @@ function initializeCharts() {
       const options = parent.querySelectorAll('.chart-option');
       options.forEach(opt => opt.classList.remove('active'));
       option.classList.add('active');
-      // Chart rendering logic would go here
     });
   });
 }
