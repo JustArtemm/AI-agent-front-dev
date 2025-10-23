@@ -34,7 +34,9 @@ window.addEventListener('load', () => {
       event: 'page_visit',
       url: window.location.href,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
+      // random number as sessionId
+      sessionId: Math.random().toString(36).substring(2, 15)
     })
   })
     .then(res => console.log('Visit logged:', res.status))
