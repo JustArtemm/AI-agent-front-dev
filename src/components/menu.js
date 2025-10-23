@@ -373,6 +373,10 @@ export function initializeApp() {
             
             <div class="card">
               <h3>Предупреждения о рисках</h3>
+              <!-- Dynamic alerts from webhook -->
+              <div id="planning-alerts-container">
+                <div class="muted">Загрузка данных...</div>
+              </div>
             </div>
             
             <div class="row">
