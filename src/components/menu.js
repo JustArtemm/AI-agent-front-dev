@@ -167,25 +167,18 @@ function displaySimilarTasks(tasks) {
 }
 
 // Function to display alerts in Planning section from n8n webhook response
+// Function to display alerts in Planning section from n8n webhook response
 function displayPlanningAlerts(alerts) {
-  const container = document.querySelector('#planning .card h3 + .alert')?.parentElement;
+  const container = document.getElementById('planning-alerts-container');
   if (!container) return;
 
-  // Create or find a container to hold dynamic alerts
-  let dynamicContainer = document.getElementById('planning-alerts-container');
-  if (!dynamicContainer) {
-    dynamicContainer = document.createElement('div');
-    dynamicContainer.id = 'planning-alerts-container';
-    container.appendChild(dynamicContainer);
-  }
-
   if (!alerts || alerts.length === 0) {
-    dynamicContainer.innerHTML = '<div class="muted">Нет предупреждений или проблем</div>';
+    container.innerHTML = '<div class="muted">Нет предупреждений или проблем</div>';
     return;
   }
 
   const html = alerts.map((item, index) => {
-    const type = item.type === 'bad' ? 'bad' : 'warn'; // only red/yellow supported
+    const type = item.type === 'bad' ? 'bad' : 'warn'; // red = bad, yellow = warn
     return `
       <div class="alert alert-${type}" data-planning-index="${index}">
         <div class="alert-icon">!</div>
@@ -197,7 +190,7 @@ function displayPlanningAlerts(alerts) {
     `;
   }).join('');
 
-  dynamicContainer.innerHTML = `
+  container.innerHTML = `
     <div id="planning-alerts-scroll" style="max-height:400px;overflow-y:auto;padding-right:8px;">
       ${html}
     </div>
