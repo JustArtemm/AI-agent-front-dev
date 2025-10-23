@@ -97,6 +97,17 @@ async function sendToN8N(page) {
         displaySimilarTasks([]);
       }
     }
+
+    if (page === 'planning') {
+      if (Array.isArray(responseData)) {
+        displayPlanningAlerts(responseData);
+      } else if (typeof responseData === 'object' && responseData !== null) {
+        displayPlanningAlerts([responseData]);
+      } else {
+        console.warn('Unexpected response format for planning:', responseData);
+        displayPlanningAlerts([]);
+      }
+    }
     
   } catch (error) {
     console.error('Error sending data to n8n:', error);
@@ -153,6 +164,44 @@ function displaySimilarTasks(tasks) {
 
   // Add event listeners to action buttons
   initializeActionButtons();
+}
+
+// Function to display alerts in Planning section from n8n webhook response
+function displayPlanningAlerts(alerts) {
+  const container = document.querySelector('#planning .card h3 + .alert')?.parentElement;
+  if (!container) return;
+
+  // Create or find a container to hold dynamic alerts
+  let dynamicContainer = document.getElementById('planning-alerts-container');
+  if (!dynamicContainer) {
+    dynamicContainer = document.createElement('div');
+    dynamicContainer.id = 'planning-alerts-container';
+    container.appendChild(dynamicContainer);
+  }
+
+  if (!alerts || alerts.length === 0) {
+    dynamicContainer.innerHTML = '<div class="muted">Нет предупреждений или проблем</div>';
+    return;
+  }
+
+  const html = alerts.map((item, index) => {
+    const type = item.type === 'bad' ? 'bad' : 'warn'; // only red/yellow supported
+    return `
+      <div class="alert alert-${type}" data-planning-index="${index}">
+        <div class="alert-icon">!</div>
+        <div class="alert-content">
+          <strong>${item.title}</strong><br>
+          ${item.body}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  dynamicContainer.innerHTML = `
+    <div id="planning-alerts-scroll" style="max-height:400px;overflow-y:auto;padding-right:8px;">
+      ${html}
+    </div>
+  `;
 }
 
 // Function to create alert HTML for a task pair
