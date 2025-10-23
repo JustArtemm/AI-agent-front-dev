@@ -6,7 +6,8 @@ const ACTION_URLS = {
   combine: 'https://liana0904.app.n8n.cloud/webhook/combine-tasks',
   init_meeting: 'https://liana0904.app.n8n.cloud/webhook/init-meeting',
   send_to_chat: 'https://liana0904.app.n8n.cloud/webhook/send-to-chat',
-  user_visit : "https://liana0904.app.n8n.cloud/webhook/user-event"
+  user_visit : "https://liana0904.app.n8n.cloud/webhook/user-event",
+  export_csv : "https://liana0904.app.n8n.cloud/webhook/export-csv"
 };
 
 
@@ -697,7 +698,60 @@ function initializeReports() {
     alert('Функция экспорта в PDF будет реализована при интеграции с бэкендом');
   });
 
-  document.getElementById('btn-print').addEventListener('click', () => window.print());
+  document.getElementById('btn-pdf').textContent = 'Скачать CSV';
+document.getElementById('btn-pdf').addEventListener('click', async () => {
+  try {
+    // Send POST request to n8n webhook
+    const response = await fetch(ACTION_URLS.combine, {  // <-- you can replace with your own webhook if needed
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request: 'export_csv', timestamp: new Date().toISOString() })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка HTTP ${response.status}`);
+    }
+
+    const responseText = await response.text();
+    console.log('Raw CSV response text:', responseText);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (err) {
+      console.error('Ошибка при парсинге JSON:', err);
+      alert('Некорректный ответ сервера: не удалось распарсить JSON.');
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      alert('Нет данных для экспорта.');
+      return;
+    }
+
+    // Convert JSON array to CSV
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(','), // header line
+      ...data.map(obj => headers.map(h => `"${String(obj[h] ?? '').replace(/"/g, '""')}"`).join(','))
+    ];
+    const csvContent = csvRows.join('\n');
+
+    // Download the CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `n8n_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    console.log('CSV file generated and download started.');
+  } catch (error) {
+    console.error('Ошибка при скачивании CSV:', error);
+    alert(`Не удалось скачать CSV: ${error.message}`);
+  }
+});
   document.getElementById('btn-refresh').addEventListener('click', () => location.reload());
 }
 
