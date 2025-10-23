@@ -1,5 +1,5 @@
 // Webhook URL - replace with your actual n8n webhook URL
-const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook-test/main-entry';
+const N8N_WEBHOOK_URL = 'https://liana0904.app.n8n.cloud/webhook/main-entry';
 
 // Action URLs
 const ACTION_URLS = {
@@ -373,27 +373,6 @@ export function initializeApp() {
             
             <div class="card">
               <h3>Предупреждения о рисках</h3>
-              <div class="alert alert-warn">
-                <div class="alert-icon">!</div>
-                <div class="alert-content">
-                  <strong>Риск срыва дедлайна:</strong> Задача "Реализация модуля аналитики" имеет высокую сложность и может не уложиться в срок
-                  <div class="alert-actions">
-                    <button class="alert-btn">Перенести дедлайн</button>
-                    <button class="alert-btn">Назначить встречу</button>
-                    <button class="alert-btn">Перераспределить ресурсы</button>
-                  </div>
-                </div>
-              </div>
-              <div class="alert alert-bad">
-                <div class="alert-icon">!</div>
-                <div class="alert-content">
-                  <strong>Перегрузка ресурсов:</strong> Разработчик Иванов А.С. назначен на 5 задач одновременно
-                  <div class="alert-actions">
-                    <button class="alert-btn">Перераспределить</button>
-                    <button class="alert-btn">Назначить встречу</button>
-                  </div>
-                </div>
-              </div>
             </div>
             
             <div class="row">
