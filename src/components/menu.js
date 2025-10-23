@@ -694,9 +694,9 @@ function initializeReports() {
     a.download = 'tasks.csv'; document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
   });
 
-  document.getElementById('btn-pdf').addEventListener('click', () => {
-    alert('Функция экспорта в PDF будет реализована при интеграции с бэкендом');
-  });
+  // document.getElementById('btn-pdf').addEventListener('click', () => {
+  //   alert('Функция экспорта в PDF будет реализована при интеграции с бэкендом');
+  // });
 
   document.getElementById('btn-pdf').textContent = 'Скачать CSV';
 document.getElementById('btn-pdf').addEventListener('click', async () => {
